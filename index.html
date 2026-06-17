@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Spendlens · Expense Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2335;
+    --border: #2a3050;
+    --accent: #00d4aa;
+    --accent2: #7c6af7;
+    --text: #e8eaf6;
+    --muted: #7a82a6;
+    --danger: #ff6b6b;
+    --warn: #ffd166;
+    --radius: 10px;
+    --font: 'Inter', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .header-meta { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  /* ── Layout ── */
+  main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+  section { margin-bottom: 40px; }
+  h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h2::after { content:''; flex:1; height:1px; background: var(--border); }
+
+  /* ── KPI Cards ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+  .kpi.purple::before { background: var(--accent2); }
+  .kpi.warn::before { background: var(--warn); }
+  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .kpi-value { font-size: 28px; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+  .kpi.purple .kpi-value { color: var(--accent2); }
+  .kpi.warn .kpi-value { color: var(--warn); }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ── Category Table ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead tr { border-bottom: 2px solid var(--border); }
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  th:hover { color: var(--text); }
+  th .sort-icon { margin-left: 4px; opacity: 0.4; }
+  th.active .sort-icon { opacity: 1; color: var(--accent); }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 11px 14px; }
+  td.mono { font-family: var(--mono); }
+
+  /* ── Category pills ── */
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+  }
+  .pill-Travel    { background: #1a3a5c; color: #5bc0f8; }
+  .pill-Food      { background: #2d2010; color: #ffb347; }
+  .pill-Software  { background: #1a2f1a; color: #5de88a; }
+  .pill-Entertainment { background: #2d1a40; color: #c084fc; }
+
+  /* ── Top Merchants ── */
+  .merchants-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; }
+  .merchant-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .merchant-rank {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--border);
+    min-width: 28px;
+  }
+  .merchant-rank.r1 { color: var(--warn); }
+  .merchant-rank.r2 { color: var(--muted); }
+  .merchant-rank.r3 { color: #8b6914; }
+  .merchant-name { font-weight: 600; font-size: 14px; }
+  .merchant-amt { font-family: var(--mono); color: var(--accent); font-weight: 600; margin-top: 2px; }
+
+  /* ── Filter Buttons ── */
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .filter-btn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font);
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .filter-btn.active.cat-Food { background: #ffb347; border-color: #ffb347; }
+  .filter-btn.active.cat-Software { background: #5de88a; border-color: #5de88a; }
+  .filter-btn.active.cat-Entertainment { background: #c084fc; border-color: #c084fc; }
+  .filter-btn.active.cat-Travel { background: #5bc0f8; border-color: #5bc0f8; }
+
+  /* ── Sort row ── */
+  .sort-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .sort-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+  .sort-btn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font);
+  }
+  .sort-btn.active { border-color: var(--accent2); color: var(--accent2); }
+
+  /* ── Add Expense Form ── */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 14px; margin-bottom: 16px; }
+  label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 6px; }
+  input, select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+  .btn-add {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 24px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: opacity 0.15s;
+  }
+  .btn-add:hover { opacity: 0.85; }
+  .form-error { color: var(--danger); font-size: 12px; margin-top: 8px; min-height: 16px; }
+  .form-success { color: var(--accent); font-size: 12px; margin-top: 8px; }
+
+  /* ── EUR Slider ── */
+  .slider-card {
+    background: var(--surface);
+    border: 1px solid var(--accent2);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+  }
+  .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .slider-title { font-weight: 600; color: var(--accent2); }
+  .slider-val { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--accent2); }
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--accent2);
+    height: 4px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin-bottom: 8px;
+  }
+  .slider-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+  .slider-impact {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--bg);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .slider-impact span { color: var(--accent2); font-weight: 600; font-family: var(--mono); }
+
+  /* ── About / Notes ── */
+  .about-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    font-size: 13px;
+    line-height: 1.75;
+    color: #b0b8d8;
+  }
+  .about-card h3 { color: var(--text); font-size: 15px; margin-bottom: 12px; }
+  .about-card h4 { color: var(--accent); font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; margin: 16px 0 6px; }
+
+  /* ── Empty state ── */
+  .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    header { padding: 0 16px; }
+    main { padding: 20px 12px; }
+    .kpi-value { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Spend<span>lens</span></div>
+  <div class="header-meta">Expense Dashboard · Rates as of 2026-05-01</div>
+</header>
+
+<main>
+
+  <!-- KPI Summary -->
+  <section>
+    <h2>Overview</h2>
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Total Spend (USD)</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+        <div class="kpi-sub">Across all 20 transactions</div>
+      </div>
+      <div class="kpi purple">
+        <div class="kpi-label">Transactions</div>
+        <div class="kpi-value" id="kpi-count">20</div>
+        <div class="kpi-sub" id="kpi-count-sub">4 categories</div>
+      </div>
+      <div class="kpi warn">
+        <div class="kpi-label">Largest Single Expense</div>
+        <div class="kpi-value" id="kpi-max">—</div>
+        <div class="kpi-sub" id="kpi-max-sub">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EUR Rate Adjuster (Bonus) -->
+  <section>
+    <h2>What-If · EUR/USD Rate</h2>
+    <div class="slider-card">
+      <div class="slider-header">
+        <div class="slider-title">Adjust EUR → USD Rate</div>
+        <div class="slider-val" id="eur-rate-display">0.9201</div>
+      </div>
+      <input type="range" id="eur-slider" min="0.80" max="1.10" step="0.001" value="0.9201" />
+      <div class="slider-meta"><span>0.80</span><span>Base: 0.9201</span><span>1.10</span></div>
+      <div class="slider-impact" id="slider-impact">Adjust the slider to see how EUR rate changes affect total spend.</div>
+    </div>
+  </section>
+
+  <!-- Category Summary -->
+  <section>
+    <h2>Category Breakdown</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Category</th>
+            <th>Transactions</th>
+            <th>Total (USD)</th>
+            <th>Largest Tx (USD)</th>
+          </tr>
+        </thead>
+        <tbody id="cat-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Top Merchants -->
+  <section>
+    <h2>Top 3 Merchants by Spend</h2>
+    <div class="merchants-grid" id="merchants-grid"></div>
+  </section>
+
+  <!-- Expense Table -->
+  <section>
+    <h2>All Expenses</h2>
+    <div class="filter-row">
+      <button class="filter-btn" onclick="toggleFilter('All')">All</button>
+      <button class="filter-btn cat-Travel" onclick="toggleFilter('Travel')">Travel</button>
+      <button class="filter-btn cat-Food" onclick="toggleFilter('Food')">Food</button>
+      <button class="filter-btn cat-Software" onclick="toggleFilter('Software')">Software</button>
+      <button class="filter-btn cat-Entertainment" onclick="toggleFilter('Entertainment')">Entertainment</button>
+    </div>
+    <div class="sort-row" style="margin-bottom:14px;">
+      <span class="sort-label">Sort by:</span>
+      <button class="sort-btn active" id="sort-date-asc" onclick="setSort('date','asc')">Date ↑</button>
+      <button class="sort-btn" id="sort-date-desc" onclick="setSort('date','desc')">Date ↓</button>
+      <button class="sort-btn" id="sort-usd-asc" onclick="setSort('usd','asc')">Amount ↑</button>
+      <button class="sort-btn" id="sort-usd-desc" onclick="setSort('usd','desc')">Amount ↓</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Merchant</th>
+            <th>Original</th>
+            <th>Currency</th>
+            <th>Category</th>
+            <th>USD Equivalent</th>
+          </tr>
+        </thead>
+        <tbody id="expense-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Add Expense -->
+  <section>
+    <h2>Add Expense</h2>
+    <div class="form-card">
+      <div class="form-grid">
+        <div>
+          <label>Merchant Name</label>
+          <input type="text" id="f-merchant" placeholder="e.g. Amazon" maxlength="80"/>
+        </div>
+        <div>
+          <label>Amount</label>
+          <input type="number" id="f-amount" placeholder="0.00" min="0.01" step="0.01"/>
+        </div>
+        <div>
+          <label>Currency</label>
+          <select id="f-currency">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="INR">INR</option>
+            <option value="JPY">JPY</option>
+            <option value="AUD">AUD</option>
+            <option value="CAD">CAD</option>
+            <option value="SGD">SGD</option>
+            <option value="AED">AED</option>
+            <option value="MXN">MXN</option>
+          </select>
+        </div>
+        <div>
+          <label>Category</label>
+          <select id="f-category">
+            <option value="Travel">Travel</option>
+            <option value="Food">Food</option>
+            <option value="Software">Software</option>
+            <option value="Entertainment">Entertainment</option>
+          </select>
+        </div>
+        <div>
+          <label>Date</label>
+          <input type="date" id="f-date"/>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addExpense()">+ Add Expense</button>
+      <div id="form-msg" class="form-error"></div>
+    </div>
+  </section>
+
+  <!-- About / Notes -->
+  <section>
+    <h2>About This Dashboard</h2>
+    <div class="about-card">
+      <h3>How Currency Conversion Works</h3>
+      <p>
+        All expenses are converted to USD using a static snapshot of exchange rates dated 2026-05-01.
+        The conversion formula is straightforward: <strong>USD = original amount ÷ rate</strong>, where each rate represents
+        how many units of that currency equal one US dollar. For example, if 1 USD = 83.47 INR,
+        an expense of ₹8,200 becomes $98.24 USD.
+      </p>
+      <h4>Why a static rate file?</h4>
+      <p>
+        Using a single, versioned rate file means every report is reproducible — running the same data
+        next month gives the same output. This is critical for board reporting where figures must be
+        auditable and consistent. Live API rates would cause the same transaction to show different USD
+        values depending on when the report is generated.
+      </p>
+      <h4>Adding a 25th currency</h4>
+      <p>
+        The rates object is a simple key-value map. Adding a new currency requires one line: the ISO
+        code and its USD rate. No logic changes are needed — the conversion function reads from the map
+        dynamically. The add-expense form and conversion pipeline will pick it up automatically.
+      </p>
+      <h4>Handling null or missing rates</h4>
+      <p>
+        If a rate entry is null or undefined, dividing by it would produce <code>Infinity</code> or <code>NaN</code> —
+        both of which would silently corrupt totals. The conversion function guards against this by checking
+        for a valid, positive rate before dividing. Expenses with missing rates are flagged as
+        <em>"rate unavailable"</em> rather than silently treated as zero or skipped.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────
+const BASE_RATES = {
+  USD: 1.0000,
+  EUR: 0.9201,
+  GBP: 0.7887,
+  INR: 83.4700,
+  JPY: 153.8200,
+  AUD: 1.5312,
+  CAD: 1.3641,
+  SGD: 1.3478,
+  AED: 3.6725,
+  MXN: 17.1540,
+};
+
+const INITIAL_EXPENSES = [
+  {id:1,  date:'2026-02-03', merchant:'Indigo Airlines',      amount:8200,  currency:'INR', category:'Travel'},
+  {id:2,  date:'2026-02-10', merchant:'Slack Pro',            amount:12.50, currency:'USD', category:'Software'},
+  {id:3,  date:'2026-02-14', merchant:'Dishoom London',       amount:68.40, currency:'GBP', category:'Food'},
+  {id:4,  date:'2026-02-19', merchant:'AWS',                  amount:143.00,currency:'USD', category:'Software'},
+  {id:5,  date:'2026-02-25', merchant:'Singapore Taxi',       amount:32.00, currency:'SGD', category:'Travel'},
+  {id:6,  date:'2026-03-02', merchant:'Figma',                amount:15.00, currency:'USD', category:'Software'},
+  {id:7,  date:'2026-03-07', merchant:'Boulangerie Utopie',   amount:9.80,  currency:'EUR', category:'Food'},
+  {id:8,  date:'2026-03-11', merchant:'JR Rail Pass',         amount:50000, currency:'JPY', category:'Travel'},
+  {id:9,  date:'2026-03-15', merchant:'Netflix',              amount:15.49, currency:'USD', category:'Entertainment'},
+  {id:10, date:'2026-03-20', merchant:'Swiggy',               amount:620.00,currency:'INR', category:'Food'},
+  {id:11, date:'2026-03-28', merchant:'Air Canada',           amount:410.00,currency:'CAD', category:'Travel'},
+  {id:12, date:'2026-04-02', merchant:'GitHub Copilot',       amount:10.00, currency:'USD', category:'Software'},
+  {id:13, date:'2026-04-08', merchant:'Burj Khalifa tickets', amount:410.00,currency:'AED', category:'Entertainment'},
+  {id:14, date:'2026-04-12', merchant:'Qantas',               amount:520.00,currency:'AUD', category:'Travel'},
+  {id:15, date:'2026-04-15', merchant:'Linear',               amount:8.00,  currency:'USD', category:'Software'},
+  {id:16, date:'2026-04-18', merchant:'Tacos el Califa',      amount:180.00,currency:'MXN', category:'Food'},
+  {id:17, date:'2026-04-22', merchant:'Spotify',              amount:10.99, currency:'USD', category:'Entertainment'},
+  {id:18, date:'2026-04-25', merchant:'Zoom',                 amount:15.99, currency:'USD', category:'Software'},
+  {id:19, date:'2026-04-29', merchant:'Lune Croissanterie',   amount:22.00, currency:'AUD', category:'Food'},
+  {id:20, date:'2026-05-01', merchant:'Emirates flight',      amount:1850,  currency:'AED', category:'Travel'},
+];
+
+// ── State ──────────────────────────────────────────────────────────────────
+let expenses = INITIAL_EXPENSES.map((e, i) => ({...e, id: i+1}));
+let activeFilter = 'All';
+let sortKey = 'date';
+let sortDir = 'asc';
+let eurRate = BASE_RATES.EUR; // mutable for slider
+let nextId = 21;
+
+// ── Conversion ────────────────────────────────────────────────────────────
+function toUSD(amount, currency) {
+  if (currency === 'EUR') {
+    // Use live slider rate for EUR
+    if (!eurRate || eurRate <= 0) return null;
+    return amount / eurRate;
+  }
+  const rate = BASE_RATES[currency];
+  if (!rate || rate <= 0) return null; // guard against null/missing rates
+  return amount / rate;
+}
+
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return '$' + n.toFixed(2);
+}
+
+// ── Derived Data ──────────────────────────────────────────────────────────
+function getEnriched() {
+  return expenses.map(e => ({
+    ...e,
+    usd: toUSD(e.amount, e.currency)
+  }));
+}
+
+function getCategoryStats(data) {
+  const map = {};
+  data.forEach(e => {
+    if (!map[e.category]) map[e.category] = { total: 0, count: 0, max: 0 };
+    const v = e.usd || 0;
+    map[e.category].total += v;
+    map[e.category].count += 1;
+    if (v > map[e.category].max) map[e.category].max = v;
+  });
+  return Object.entries(map)
+    .map(([cat, s]) => ({ category: cat, ...s }))
+    .sort((a, b) => b.total - a.total);
+}
+
+function getTopMerchants(data) {
+  const map = {};
+  data.forEach(e => {
+    if (!map[e.merchant]) map[e.merchant] = 0;
+    map[e.merchant] += (e.usd || 0);
+  });
+  return Object.entries(map)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name, total]) => ({ name, total }));
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function render() {
+  const data = getEnriched();
+
+  // KPIs
+  const total = data.reduce((s, e) => s + (e.usd || 0), 0);
+  document.getElementById('kpi-total').textContent = fmt(total);
+  document.getElementById('kpi-count').textContent = data.length;
+  const catCount = new Set(data.map(e => e.category)).size;
+  document.getElementById('kpi-count-sub').textContent = `${catCount} categor${catCount === 1 ? 'y' : 'ies'}`;
+  const maxExp = data.reduce((m, e) => (e.usd || 0) > (m.usd || 0) ? e : m, data[0]);
+  document.getElementById('kpi-max').textContent = fmt(maxExp.usd);
+  document.getElementById('kpi-max-sub').textContent = maxExp.merchant;
+
+  // Category table
+  const cats = getCategoryStats(data);
+  const catTbody = document.getElementById('cat-tbody');
+  catTbody.innerHTML = cats.map((c, i) => `
+    <tr>
+      <td class="mono">#${i+1}</td>
+      <td><span class="pill pill-${c.category}">${c.category}</span></td>
+      <td class="mono">${c.count}</td>
+      <td class="mono">${fmt(c.total)}</td>
+      <td class="mono">${fmt(c.max)}</td>
+    </tr>
+  `).join('');
+
+  // Top merchants
+  const merchants = getTopMerchants(data);
+  const rankClass = ['r1','r2','r3'];
+  document.getElementById('merchants-grid').innerHTML = merchants.map((m, i) => `
+    <div class="merchant-card">
+      <div class="merchant-rank ${rankClass[i]}">#${i+1}</div>
+      <div>
+        <div class="merchant-name">${escHtml(m.name)}</div>
+        <div class="merchant-amt">${fmt(m.total)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Expense table
+  let filtered = data.filter(e => activeFilter === 'All' || e.category === activeFilter);
+  filtered = [...filtered].sort((a, b) => {
+    if (sortKey === 'date') {
+      return sortDir === 'asc'
+        ? a.date.localeCompare(b.date)
+        : b.date.localeCompare(a.date);
+    } else {
+      return sortDir === 'asc'
+        ? (a.usd || 0) - (b.usd || 0)
+        : (b.usd || 0) - (a.usd || 0);
+    }
+  });
+
+  const tbody = document.getElementById('expense-tbody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">No expenses in this category.</td></tr>`;
+  } else {
+    tbody.innerHTML = filtered.map((e, i) => `
+      <tr>
+        <td class="mono" style="color:var(--muted)">${i+1}</td>
+        <td>${e.date}</td>
+        <td>${escHtml(e.merchant)}</td>
+        <td class="mono">${e.amount.toLocaleString()}</td>
+        <td><code style="font-family:var(--mono);font-size:11px;color:var(--muted)">${e.currency}</code></td>
+        <td><span class="pill pill-${e.category}">${e.category}</span></td>
+        <td class="mono" style="color:var(--accent)">${fmt(e.usd)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Slider impact
+  updateSliderImpact(data, total);
+}
+
+function updateSliderImpact(data, currentTotal) {
+  const baseTotal = data.reduce((s, e) => {
+    if (e.currency === 'EUR') return s + (e.amount / BASE_RATES.EUR);
+    return s + (e.usd || 0);
+  }, 0);
+  const diff = currentTotal - baseTotal;
+  const sign = diff >= 0 ? '+' : '';
+  document.getElementById('slider-impact').innerHTML =
+    `EUR rate adjusted to <span>${eurRate.toFixed(4)}</span>. ` +
+    `Total changes by <span>${sign}${fmt(diff)}</span> vs base rate of 0.9201. ` +
+    `Current total: <span>${fmt(currentTotal)}</span>.`;
+}
+
+// ── Filter & Sort ─────────────────────────────────────────────────────────
+function toggleFilter(cat) {
+  activeFilter = (activeFilter === cat && cat !== 'All') ? 'All' : cat;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.remove('active');
+    if (b.textContent.trim() === activeFilter) b.classList.add('active');
+    if (activeFilter === 'All' && b.textContent.trim() === 'All') b.classList.add('active');
+  });
+  render();
+}
+
+function setSort(key, dir) {
+  sortKey = key; sortDir = dir;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`sort-${key}-${dir}`).classList.add('active');
+  render();
+}
+
+// ── Add Expense ───────────────────────────────────────────────────────────
+function addExpense() {
+  const msg = document.getElementById('form-msg');
+  msg.className = 'form-error';
+  msg.textContent = '';
+
+  const merchant = document.getElementById('f-merchant').value.trim();
+  const amountRaw = document.getElementById('f-amount').value;
+  const currency = document.getElementById('f-currency').value;
+  const category = document.getElementById('f-category').value;
+  const date = document.getElementById('f-date').value;
+
+  // Validation
+  if (!merchant) { msg.textContent = 'Merchant name is required.'; return; }
+  if (merchant.length > 80) { msg.textContent = 'Merchant name is too long.'; return; }
+  const amount = parseFloat(amountRaw);
+  if (!amountRaw || isNaN(amount) || amount <= 0) {
+    msg.textContent = 'Amount must be a positive number.'; return;
+  }
+  if (amount > 10_000_000) { msg.textContent = 'Amount seems unusually large — please double-check.'; return; }
+  if (!date) { msg.textContent = 'Date is required.'; return; }
+
+  const usd = toUSD(amount, currency);
+  if (usd === null) { msg.textContent = `Exchange rate for ${currency} is unavailable.`; return; }
+
+  expenses.push({ id: nextId++, date, merchant, amount, currency, category });
+  document.getElementById('f-merchant').value = '';
+  document.getElementById('f-amount').value = '';
+  document.getElementById('f-date').value = '';
+  msg.className = 'form-success';
+  msg.textContent = `✓ Added "${merchant}" — ${fmt(usd)} USD`;
+  render();
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Set today as default date
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  // Default All filter active
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    if (b.textContent.trim() === 'All') b.classList.add('active');
+  });
+  // EUR Slider
+  document.getElementById('eur-slider').addEventListener('input', function() {
+    eurRate = parseFloat(this.value);
+    document.getElementById('eur-rate-display').textContent = eurRate.toFixed(4);
+    render();
+  });
+
+  render();
+});
+</script>
+</body>
+</html>
