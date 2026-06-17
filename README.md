@@ -2,7 +2,7 @@
 
 A lightweight, single-page expense dashboard that converts multi-currency transactions to USD and surfaces spending insights for the Spendlens finance team.
 
-**Live URL:** _(add your Netlify URL here after deploying)_
+**Live URL: https://shreerangab.github.io/Spendlens-expense-dashboard/
 
 ---
 
